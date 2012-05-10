@@ -48,6 +48,6 @@ func.flip = function(fn) {
       var temp = args[0];
       args[0] = args[1];
       args[1] = temp;
-    fn.apply(this, args);
+    return fn.apply(this, args);
   };
 };
