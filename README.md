@@ -3,7 +3,7 @@ functional-closure
 
 allows point-free style with the closure library
 
-## fn.curry(function, opt_minLength, opt_args) ##
+## func.curry(function, opt_minLength, opt_args) ##
 
 takes a function to return the curry function of
 
@@ -45,7 +45,7 @@ var filterOdd = curryFilter(undefined, function(num) {
 filterOdd([3,4,5,6,7]); // [3,5,7]
 ```
 
-## fn.flip(function) ##
+## func.flip(function) ##
 
 notice how we needed to use the undefined to skip the array? well we can also use flip
 
@@ -58,3 +58,49 @@ var filterEven = flipFilter(function(num) {
 
 filterEven([3,4,5,6,7]); // [4,6]
 ```
+
+## func.compose(function*) ##
+
+pass in several functions and they will be applied to the list
+backwards.
+
+```javascript
+var addOne = function(x) {return x + 1};
+var addOneToAll = func.map(addOne);
+var isOdd = function(x) {return x % 2};
+var filterOdd = func.filter(isOdd);
+var addThenGetOdd = func.compose(filterOdd, addOneToAll);
+addThenGetOdd([1,2,3,4,5,6]); // [3,5,7]
+```
+
+## func.filter ##
+
+a curried filter function where first parameter is the function and
+second array (will return value).
+
+## func.in ##
+
+a curried function where first parameter is array and second is element to
+search the array for
+
+## func.contains ##
+
+a curried function where first parameter is the element we're trying to
+match and the second is the array of elements to check
+
+## func.not ##
+
+returns !argument
+
+## func.each ##
+
+a curried function where first element is a list and second is the function to run on the list
+
+## func.doTo ##
+
+a curried function where first element is a function and second is a list to run the function on
+
+## func.map ##
+
+a curried function where first element is the mapping function and second is the list to map.
+
