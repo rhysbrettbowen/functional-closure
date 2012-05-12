@@ -57,38 +57,68 @@ func.flip = function(fn) {
 
 
 /**
- * @param {...Function} var_args functions to compose.
+ * @param {...Function|string} var_args functions to compose.
  * @return {*} the output of the composed function.
  */
 func.compose = function(var_args) {
   var args = [].slice.call(arguments);
   return function(arg) {
     var ret = arg;
-    for (var i = args.length; i; i--)
+    for (var i = args.length; i; i--) {
+      if (goog.isString(args[i - 1]))
+        args[i - 1] = func.map(args[i - 1]);
       ret = args[i - 1](ret);
+    }
     return ret;
   };
 };
 
 
 /**
+ * check to see if string should change to a function
+ *
+ * @param {string|Function} str the string or function to check.
+ * @return {Function} the lambda.
  */
-func.filter = func.curry(func.flip(goog.array.filter), 2);
+func.isStrThenLambda = function(str) {
+  return goog.isString(str) ? func.lambda(str) : str;
+};
+
+
+/**
+ * check if the first argument could be a lambda
+ *
+ * @param  {Function} fn function to check.
+ * @return {Function} function with check for lambda.
+ */
+func.checkFirstForLambda = function(fn) {
+  return function() {
+    var args = [].slice.call(arguments);
+    args[0] = func.isStrThenLambda(args[0]);
+    return fn.apply(null, args);
+  }
+};
 
 
 /**
  */
-func.in = func.curry(goog.array.contains, 2);
+func.filter = func.checkFirstForLambda(
+    func.curry(func.flip(goog.array.filter), 2));
 
 
 /**
  */
-func.contains = func.flip(func.in);
+func.isIn = func.curry(goog.array.contains, 2);
+
+
+/**
+ */
+func.contains = func.flip(func.isIn);
 
 
 /**
  * @param {*} item to not.
- * @return {Boolean} not item.
+ * @return {boolean} not item.
  */
 func.not = function(item) {return !item;};
 
@@ -100,12 +130,22 @@ func.each = func.curry(goog.array.forEach, 2);
 
 /**
  */
-func.doTo = func.flip(func.each);
+func.doTo = func.checkFirstForLambda(func.flip(func.each));
 
 
 /**
  */
-func.map = func.curry(func.flip(goog.array.map), 2);
+func.map = func.checkFirstForLambda(func.curry(func.flip(goog.array.map), 2));
+
+
+/**
+ *  @param {string} str to make in to function.
+ *  @return {Function} the lambda.
+ */
+func.lambda = function(str) {
+  return new Function('x', 'return ' + str + ';');
+};
+
 
 
 

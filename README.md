@@ -3,7 +3,7 @@ functional-closure
 
 allows point-free style with the closure library
 
-## func.curry(function, opt_minLength, opt_args) ##
+# func.curry(function, opt_minLength, opt_args) ##
 
 takes a function to return the curry function of
 
@@ -61,7 +61,7 @@ filterEven([3,4,5,6,7]); // [4,6]
 
 ## func.compose(function*) ##
 
-pass in several functions and they will be applied to the list
+pass in several functions or string lambdas (they will be run as map) and they will be applied to the list
 backwards.
 
 ```javascript
@@ -75,7 +75,8 @@ addThenGetOdd([1,2,3,4,5,6]); // [3,5,7]
 
 ## func.filter ##
 
-a curried filter function where first parameter is the function and
+a curried filter function where first parameter is the function or
+string lambda and
 second array (will return value).
 
 ## func.in ##
@@ -102,5 +103,9 @@ a curried function where first element is a function and second is a list to run
 
 ## func.map ##
 
-a curried function where first element is the mapping function and second is the list to map.
+a curried function where first element is the mapping function or string lambda and second is the list to map.
+
+## func.lambda ##
+
+transforms a string to a function, put in x as the passed in arg
 
