@@ -31,40 +31,32 @@ goog.require('goog.array');
  * @return {Function} curried function.
  */
 func.curry = function(fn, opt_minLength, var_args) {
-
-  // get the arguments passed in
   var args = arguments.length > 2 ? [].slice.call(arguments, 2) : [];
-
-  // return the special curried function
-  return function() {
-
-    // clone arguments in case used across more than one function
-    var newArgs = goog.array.clone(args);
-
-    // run if there are no arguments
+  var curried = function() {
+    var newArgs = args.slice();
     if (!arguments.length)
-      return fn.apply(this, newArgs);
-
-    // only fill in undefined gaps in the arguments array
+      return fn.apply(this, args);
     var ind = 0;
     goog.array.forEach(arguments, function(arg) {
-      while (goog.isDef(newArgs[ind])) {ind++;}
-      newArgs[ind++] = arg;
+      if (!goog.isDef(arg)) {
+        while (goog.isDef(newArgs[ind++])) {}
+      } else {
+        while (goog.isDef(newArgs[ind]))
+          ind++;
+        newArgs[ind] = arg;
+      }
     });
-
-    // test that minimum length is satisfied
     var newArgsLength = goog.array.filter(newArgs, function(arg) {
       return goog.isDef(arg);
     }).length;
     if (opt_minLength <= newArgsLength) {
       return fn.apply(this, newArgs);
     }
-
-    // otherwise recurry
-    return func.curry.apply(null,
-          goog.array.concat(fn, goog.isDef(opt_minLength) ?
-              opt_minLength - newArgsLength : undefined, newArgs));
+    return func.curry.apply(this,
+        goog.array.concat(fn, goog.isDef(opt_minLength) ?
+            opt_minLength - newArgsLength : undefined, newArgs));
   };
+  return curried;
 };
 
 
@@ -85,40 +77,115 @@ func.flip = function(fn) {
 
 
 /**
- * @param {...Function} var_args functions to compose.
+ * @param {...Function|string} var_args functions to compose.
  * @return {Function} the composed function.
  */
 func.compose = function(var_args) {
   var args = [].slice.call(arguments);
   return function(arg) {
     var ret = arg;
-    for (var i = args.length; i; i--)
-      ret = args[i - 1](ret);
+    for (var i = args.length; i; i--) {
+      ret = func.isStrThenLambda(args[i - 1])(ret);
+    }
     return ret;
   };
 };
 
 
 /**
+ * check to see if string should change to a function
+ *
+ * @param {string|Function} str the string or function to check.
+ * @return {Function} the lambda.
  */
-func.filter = func.curry(func.flip(goog.array.filter), 2);
+func.isStrThenLambda = function(str) {
+  return goog.isString(str) ? func.lambda(str) : str;
+};
+
+
+/**
+ * check if the first argument could be a lambda
+ *
+ * @param  {Function} fn function to check.
+ * @return {Function} function with check for lambda.
+ */
+func.checkFirstForLambda = function(fn) {
+  return function() {
+    var args = [].slice.call(arguments);
+    args[0] = func.isStrThenLambda(args[0]);
+    return fn.apply(null, args);
+  }
+};
 
 
 /**
  */
-func.in = func.curry(goog.array.contains, 2);
+func.filter = func.checkFirstForLambda(
+    func.curry(func.flip(goog.array.filter), 2));
 
 
 /**
  */
-func.contains = func.flip(func.in);
+func.isIn = func.curry(goog.array.contains, 2);
+
+
+/**
+ */
+func.contains = func.flip(func.isIn);
 
 
 /**
  * @param {*} item to not.
- * @return {Boolean} not item.
+ * @return {Function} not item.
  */
-func.not = function(item) {return !item;};
+func.not = function(item) {
+  return function() {
+    return !item.apply(this, arguments)
+  }
+};
+
+
+func.or = function() {
+  var args = goog.array.clone(arguments);
+  return function(item) {
+    return goog.array.some(args, function(arg) {
+      return arg(item);
+    });
+  };
+};
+
+
+/**
+ * @param {*} x
+ */
+func.identity = function(x) {
+  return x;
+};
+
+
+/**
+ * returns the function based on the test
+ * 
+ * @param {boolean} test for which function to run
+ * @param {Function} yes function
+ * @param {Function} no function
+ * @return {Function}
+ */
+func.ifElse = function(test, yes, no) {
+  return test ? yes : no || func.identity;
+};
+
+
+/**
+ * return value of object at property
+ * 
+ * @param {string} prop erty
+ * @param {Object} obj ect
+ * @return {*} value at propert on object
+ */
+func.getProp = function(prop, obj) {
+  return obj[prop];
+};
 
 
 /**
@@ -128,9 +195,20 @@ func.each = func.curry(goog.array.forEach, 2);
 
 /**
  */
-func.doTo = func.flip(func.each);
+func.doTo = func.checkFirstForLambda(func.flip(func.each));
 
 
+/**
+ */
+func.map = func.checkFirstForLambda(func.curry(func.flip(goog.array.map), 2));
 
+
+/**
+ *  @param {string} str to make in to function.
+ *  @return {Function} the lambda.
+ */
+func.lambda = function(str) {
+  return new Function('x', 'return ' + str + ';');
+};
 
 
